@@ -1,0 +1,67 @@
+# ═════════════════════════════
+# Dependencias Node & Build (Frontend)
+# ═════════════════════════════
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# ═════════════════════════════
+# Dependencias Python & Entorno (Backend)
+# ═════════════════════════════
+backend/venv/
+backend/env/
+backend/ENV/
+backend/__pycache__/
+backend/*.py[cod]
+backend/*$py.class
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/.tox/
+backend/nosetests.xml
+backend/coverage.xml
+backend/.mypy_cache/
+
+# ═════════════════════════════
+# Base de Datos
+# ═════════════════════════════
+backend/*.sqlite3
+backend/*.db
+backend/propel_erp.db
+
+# ═════════════════════════════
+# Entorno y Secretos
+# ═════════════════════════════
+.env
+.env.*
+!.env.example
+*.pem
+backend/.env
+
+# ═════════════════════════════
+# Sistema Operativo y Editores
+# ═════════════════════════════
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ═════════════════════════════
+# Archivos Confidenciales del Taller
+# ═════════════════════════════
+Planillas originales/
+"Planillas originales/"
