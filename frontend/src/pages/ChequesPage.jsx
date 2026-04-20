@@ -39,7 +39,10 @@ const CATEGORIAS_DESTINO = [
   { value: 'Cordoba', label: 'Córdoba' },
 ]
 
+import { useAuth } from '../context/AuthContext'
+
 export default function ChequesPage() {
+  const { user } = useAuth()
   const [tab, setTab] = useState('cartera')
   const [cartera, setCartera] = useState([])
   const [emitidos, setEmitidos] = useState([])
@@ -225,14 +228,16 @@ export default function ChequesPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <button
-                            onClick={() => openEstadoModal(c)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg text-xs font-medium hover:bg-primary-100 transition-colors border border-primary-200 shadow-sm"
-                            id={`btn-estado-${c.id}`}
-                          >
-                            <ArrowRight size={14} />
-                            Cambiar Estado
-                          </button>
+                          {user?.rol !== 'visor' && (
+                            <button
+                              onClick={() => openEstadoModal(c)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg text-xs font-medium hover:bg-primary-100 transition-colors border border-primary-200 shadow-sm"
+                              id={`btn-estado-${c.id}`}
+                            >
+                              <ArrowRight size={14} />
+                              Cambiar Estado
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )
@@ -248,12 +253,14 @@ export default function ChequesPage() {
       {tab === 'emitidos' && (
         <>
           <div className="flex justify-end">
-            <button onClick={() => setShowEmitidoModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 active:scale-[0.98] transition-all"
-              id="btn-nuevo-emitido">
-              <Plus size={16} />
-              Nuevo Cheque Emitido
-            </button>
+            {user?.rol !== 'visor' && (
+              <button onClick={() => setShowEmitidoModal(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 active:scale-[0.98] transition-all"
+                id="btn-nuevo-emitido">
+                <Plus size={16} />
+                Nuevo Cheque Emitido
+              </button>
+            )}
           </div>
           <div className="bg-white rounded-xl border border-surface-200 shadow-card overflow-hidden">
             <div className="overflow-x-auto min-h-[400px]">
@@ -302,16 +309,18 @@ export default function ChequesPage() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <button
-                            onClick={() => handleMarcarPagado(c.id, !c.pagado)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-sm ${
-                              c.pagado
-                                ? 'bg-surface-100 text-surface-500 hover:bg-surface-200 border-surface-200'
-                                : 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200'
-                            }`}
-                          >
-                            {c.pagado ? 'Desmarcar' : 'Marcar Pagado'}
-                          </button>
+                          {user?.rol !== 'visor' && (
+                            <button
+                              onClick={() => handleMarcarPagado(c.id, !c.pagado)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-sm ${
+                                c.pagado
+                                  ? 'bg-surface-100 text-surface-500 hover:bg-surface-200 border-surface-200'
+                                  : 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200'
+                              }`}
+                            >
+                              {c.pagado ? 'Desmarcar' : 'Marcar Pagado'}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))

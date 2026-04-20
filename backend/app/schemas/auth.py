@@ -12,11 +12,15 @@ class UsuarioLogin(BaseModel):
     username: str
     password: str
 
+class CambiarClaveInicial(BaseModel):
+    nueva_clave: str
+
 class UsuarioBasico(BaseModel):
     id: int
     username: str
     nombre_completo: Optional[str] = None
     rol: str
+    debe_cambiar_clave: bool
 
     class Config:
         from_attributes = True

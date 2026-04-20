@@ -3,6 +3,7 @@ Router: RRHH
 Endpoints para movimientos de personal (dispara REGLA B automáticamente).
 """
 from fastapi import APIRouter, Depends
+from app.core.security import get_current_active_operator
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.rrhh_movimiento import RRHHMovimientoCreate, RRHHMovimientoResponse
@@ -12,7 +13,7 @@ from app.services import rrhh_service
 router = APIRouter(prefix="/api/rrhh", tags=["RRHH"])
 
 
-@router.post("/movimientos", response_model=RRHHMovimientoResponse, status_code=201)
+@router.post("/movimientos", response_model=RRHHMovimientoResponse, status_code=201, dependencies=[Depends(get_current_active_operator)])
 def registrar_movimiento(data: RRHHMovimientoCreate, db: Session = Depends(get_db)):
     """
     Registra un movimiento de RRHH (ingreso/trabajo o egreso/pago).

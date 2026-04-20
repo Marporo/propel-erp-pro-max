@@ -12,9 +12,10 @@ from app.core.security import (
     verify_password, 
     create_access_token, 
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    get_current_user
+    get_current_user,
+    get_password_hash
 )
-from app.schemas.auth import Token, UsuarioBasico
+from app.schemas.auth import Token, UsuarioBasico, CambiarClaveInicial
 
 router = APIRouter(
     prefix="/api/auth",
@@ -45,4 +46,15 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 @router.get("/me", response_model=UsuarioBasico)
 def get_me(current_user: Usuario = Depends(get_current_user)):
     """Devuelve la información del usuario logueado actualmente"""
+    return current_user
+
+@router.post("/cambiar-clave-inicial", response_model=UsuarioBasico)
+def cambiar_clave_inicial(payload: CambiarClaveInicial, current_user: Usuario = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not current_user.debe_cambiar_clave:
+        raise HTTPException(status_code=400, detail="El usuario ya cambió su clave inicial")
+    
+    current_user.hashed_password = get_password_hash(payload.nueva_clave)
+    current_user.debe_cambiar_clave = False
+    db.commit()
+    db.refresh(current_user)
     return current_user

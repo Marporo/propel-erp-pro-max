@@ -23,7 +23,10 @@ const ORIGENES_FONDO = [
   { value: 'BBVA', label: 'BBVA' },
 ]
 
+import { useAuth } from '../context/AuthContext'
+
 export default function RRHHPage() {
+  const { user } = useAuth()
   const [empleados, setEmpleados] = useState([])
   const [selectedEmpleado, setSelectedEmpleado] = useState(null)
   const [ficha, setFicha] = useState(null)
@@ -144,17 +147,21 @@ export default function RRHHPage() {
           >
             {empleados.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
           </select>
-          <button onClick={() => setShowEmpleadoModal(true)}
-            className="p-2.5 border border-surface-200 rounded-lg text-surface-500 hover:bg-surface-50">
-            <Plus size={16} />
-          </button>
+          {user?.rol !== 'visor' && (
+            <button onClick={() => setShowEmpleadoModal(true)}
+              className="p-2.5 border border-surface-200 rounded-lg text-surface-500 hover:bg-surface-50">
+              <Plus size={16} />
+            </button>
+          )}
         </div>
-        <button onClick={() => setShowMovModal(true)} disabled={!selectedEmpleado}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 active:scale-[0.98] transition-all disabled:opacity-50"
-          id="btn-nuevo-movimiento">
-          <Plus size={16} />
-          Nuevo Movimiento
-        </button>
+        {user?.rol !== 'visor' && (
+          <button onClick={() => setShowMovModal(true)} disabled={!selectedEmpleado}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 active:scale-[0.98] transition-all disabled:opacity-50"
+            id="btn-nuevo-movimiento">
+            <Plus size={16} />
+            Nuevo Movimiento
+          </button>
+        )}
       </div>
 
       {/* Ficha del empleado */}

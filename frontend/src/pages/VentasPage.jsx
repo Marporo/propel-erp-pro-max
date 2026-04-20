@@ -6,6 +6,8 @@ import ColumnFilterPopover from '../components/ui/ColumnFilterPopover'
 import { applyAdvancedFilters, applyAdvancedSort } from '../utils/tableUtils'
 import { Plus, CreditCard, Search } from 'lucide-react'
 
+import { useAuth } from '../context/AuthContext'
+
 function formatCurrency(v) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v || 0)
 }
@@ -32,6 +34,7 @@ const estadoBadge = {
 }
 
 export default function VentasPage() {
+  const { user } = useAuth()
   const [ventas, setVentas] = useState([])
   const [clientes, setClientes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -208,14 +211,16 @@ export default function VentasPage() {
             id="search-ventas"
           />
         </div>
-        <button
-          onClick={() => setShowVentaModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 active:scale-[0.98] transition-all"
-          id="btn-nueva-venta"
-        >
-          <Plus size={16} />
-          Nueva Venta
-        </button>
+        {user?.rol !== 'visor' && (
+          <button
+            onClick={() => setShowVentaModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 active:scale-[0.98] transition-all"
+            id="btn-nueva-venta"
+          >
+            <Plus size={16} />
+            Nueva Venta
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -268,7 +273,7 @@ export default function VentasPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {v.saldo_deudor > 0 && (
+                      {v.saldo_deudor > 0 && user?.rol !== 'visor' && (
                         <button
                           onClick={() => openPagoModal(v)}
                           className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-medium hover:bg-green-100 transition-colors border border-green-200 shadow-sm"

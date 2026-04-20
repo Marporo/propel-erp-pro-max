@@ -3,6 +3,7 @@ Router: Pagos de Ventas
 Endpoints para registrar pagos (dispara REGLA A automáticamente).
 """
 from fastapi import APIRouter, Depends
+from app.core.security import get_current_active_operator
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.pago_venta import PagoVentaCreate, PagoVentaResponse
@@ -11,7 +12,7 @@ from app.services import pago_service
 router = APIRouter(prefix="/api/pagos-ventas", tags=["Pagos de Ventas"])
 
 
-@router.post("/", response_model=PagoVentaResponse, status_code=201)
+@router.post("/", response_model=PagoVentaResponse, status_code=201, dependencies=[Depends(get_current_active_operator)])
 def registrar_pago(data: PagoVentaCreate, db: Session = Depends(get_db)):
     """
     Registra un pago de venta.

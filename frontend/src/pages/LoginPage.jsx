@@ -51,7 +51,7 @@ export default function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2 border border-surface-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  placeholder="admin"
+                  placeholder="Ingresá tu usuario"
                 />
               </div>
             </div>
@@ -68,7 +68,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2 border border-surface-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  placeholder="••••••••"
+                  placeholder="Ingresá tu contraseña"
                 />
               </div>
             </div>

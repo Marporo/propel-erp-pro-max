@@ -3,6 +3,7 @@ Router: Empleados
 Endpoints CRUD para la gestión de empleados.
 """
 from fastapi import APIRouter, Depends
+from app.core.security import get_current_active_operator
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.empleado import Empleado
@@ -17,7 +18,7 @@ def listar_empleados(skip: int = 0, limit: int = 100, db: Session = Depends(get_
     return db.query(Empleado).order_by(Empleado.nombre).offset(skip).limit(limit).all()
 
 
-@router.post("/", response_model=EmpleadoResponse, status_code=201)
+@router.post("/", response_model=EmpleadoResponse, status_code=201, dependencies=[Depends(get_current_active_operator)])
 def crear_empleado(data: EmpleadoCreate, db: Session = Depends(get_db)):
     """Crea un nuevo empleado."""
     empleado = Empleado(nombre=data.nombre)
@@ -37,7 +38,7 @@ def obtener_empleado(empleado_id: int, db: Session = Depends(get_db)):
     return empleado
 
 
-@router.put("/{empleado_id}", response_model=EmpleadoResponse)
+@router.put("/{empleado_id}", response_model=EmpleadoResponse, dependencies=[Depends(get_current_active_operator)])
 def actualizar_empleado(empleado_id: int, data: EmpleadoUpdate, db: Session = Depends(get_db)):
     """Actualiza un empleado existente."""
     from fastapi import HTTPException
@@ -54,7 +55,7 @@ def actualizar_empleado(empleado_id: int, data: EmpleadoUpdate, db: Session = De
     return empleado
 
 
-@router.delete("/{empleado_id}", status_code=204)
+@router.delete("/{empleado_id}", status_code=204, dependencies=[Depends(get_current_active_operator)])
 def eliminar_empleado(empleado_id: int, db: Session = Depends(get_db)):
     """Elimina un empleado (solo si no tiene movimientos asociados)."""
     from fastapi import HTTPException

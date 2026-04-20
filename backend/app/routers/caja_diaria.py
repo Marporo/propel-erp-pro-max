@@ -4,6 +4,7 @@ Endpoints para el libro mayor (movimientos automáticos y manuales).
 """
 from typing import Optional
 from fastapi import APIRouter, Depends, Query
+from app.core.security import get_current_active_operator
 from sqlalchemy.orm import Session
 from datetime import date
 from app.database import get_db
@@ -32,7 +33,7 @@ def listar_movimientos(
     )
 
 
-@router.post("/", response_model=CajaDiariaResponse, status_code=201)
+@router.post("/", response_model=CajaDiariaResponse, status_code=201, dependencies=[Depends(get_current_active_operator)])
 def crear_movimiento_manual(data: CajaDiariaCreate, db: Session = Depends(get_db)):
     """
     Crea un movimiento manual en Caja Diaria (REGLA D).

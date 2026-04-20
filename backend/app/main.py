@@ -17,8 +17,10 @@ from app.routers import (
     cheques,
     caja_diaria,
     dashboard,
+    usuarios,
 )
 from app.core.security import get_current_user, get_password_hash
+from app.core.enums import RolUsuario
 from fastapi import Depends
 
 # Importar todos los modelos para que SQLAlchemy los registre
@@ -49,6 +51,7 @@ def create_initial_admin():
                 username="admin",
                 hashed_password=hashed_pwd,
                 nombre_completo="Administrador",
+                rol=RolUsuario.ADMIN
             )
             db.add(admin_user)
             db.commit()
@@ -79,6 +82,7 @@ app.add_middleware(
 
 # Registro de routers
 app.include_router(auth.router)
+app.include_router(usuarios.router) # Router protegido internamente para admins
 
 # Rutas protegidas (Requieren Token)
 auth_dep = [Depends(get_current_user)]

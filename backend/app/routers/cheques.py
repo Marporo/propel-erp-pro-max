@@ -3,6 +3,7 @@ Router: Cheques
 Endpoints para cheques de terceros y emitidos (dispara REGLA C automáticamente).
 """
 from fastapi import APIRouter, Depends
+from app.core.security import get_current_active_operator
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.cheque_tercero import (
@@ -65,7 +66,7 @@ def listar_cartera(db: Session = Depends(get_db)):
     return result
 
 
-@router.post("/terceros", response_model=ChequeTerceroResponse, status_code=201)
+@router.post("/terceros", response_model=ChequeTerceroResponse, status_code=201, dependencies=[Depends(get_current_active_operator)])
 def crear_cheque_tercero(data: ChequeTerceroCreate, db: Session = Depends(get_db)):
     """Crea un cheque de tercero manualmente (ingresa a cartera)."""
     c = cheque_service.crear_cheque_tercero(db, data)
@@ -129,7 +130,7 @@ def listar_cheques_emitidos(skip: int = 0, limit: int = 100, db: Session = Depen
     return result
 
 
-@router.post("/emitidos", response_model=ChequeEmitidoResponse, status_code=201)
+@router.post("/emitidos", response_model=ChequeEmitidoResponse, status_code=201, dependencies=[Depends(get_current_active_operator)])
 def crear_cheque_emitido(data: ChequeEmitidoCreate, db: Session = Depends(get_db)):
     """Crea un nuevo cheque emitido (cuenta por pagar)."""
     c = cheque_service.crear_cheque_emitido(db, data)

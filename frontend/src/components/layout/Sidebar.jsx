@@ -20,6 +20,10 @@ const navItems = [
   { to: '/cheques', label: 'Cheques', icon: FileCheck },
 ]
 
+const adminItems = [
+  { to: '/usuarios', label: 'Usuarios', icon: Users },
+]
+
 /**
  * Sidebar con 2 modos en desktop:
  *  - pinned: fijo a la izquierda, el contenido se corre
@@ -85,6 +89,23 @@ export default function Sidebar({ pinned, onTogglePin, onClose, isMobileOverlay 
             key={item.to}
             to={item.to}
             end={item.to === '/'}
+            onClick={isMobileOverlay ? onClose : undefined}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-surface-500 hover:bg-surface-100 hover:text-surface-700'
+              }`
+            }
+          >
+            <item.icon size={20} className="shrink-0" />
+            <span className="whitespace-nowrap">{item.label}</span>
+          </NavLink>
+        ))}
+        {user?.rol === 'admin' && adminItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
             onClick={isMobileOverlay ? onClose : undefined}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${

@@ -59,3 +59,21 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None or not user.activo:
         raise credentials_exception
     return user
+
+def get_current_admin_user(current_user: Usuario = Depends(get_current_user)) -> Usuario:
+    from app.core.enums import RolUsuario
+    if current_user.rol != RolUsuario.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes los privilegios necesarios para esta acción"
+        )
+    return current_user
+
+def get_current_active_operator(current_user: Usuario = Depends(get_current_user)) -> Usuario:
+    from app.core.enums import RolUsuario
+    if current_user.rol == RolUsuario.VISOR:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Los usuarios con rol Visor no pueden realizar modificaciones"
+        )
+    return current_user

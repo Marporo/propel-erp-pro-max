@@ -3,6 +3,7 @@ Router: Ventas
 Endpoints para la gestión de ventas/facturación.
 """
 from fastapi import APIRouter, Depends
+from app.core.security import get_current_active_operator
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.venta import VentaCreate, VentaUpdate, VentaResponse
@@ -34,7 +35,7 @@ def listar_ventas(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
     return result
 
 
-@router.post("/", response_model=VentaResponse, status_code=201)
+@router.post("/", response_model=VentaResponse, status_code=201, dependencies=[Depends(get_current_active_operator)])
 def crear_venta(data: VentaCreate, db: Session = Depends(get_db)):
     """Crea una nueva venta. El total se calcula automáticamente."""
     v = venta_service.crear_venta(db, data)
@@ -74,7 +75,7 @@ def obtener_venta(venta_id: int, db: Session = Depends(get_db)):
     )
 
 
-@router.put("/{venta_id}", response_model=VentaResponse)
+@router.put("/{venta_id}", response_model=VentaResponse, dependencies=[Depends(get_current_active_operator)])
 def actualizar_venta(venta_id: int, data: VentaUpdate, db: Session = Depends(get_db)):
     """Actualiza una venta. Recalcula total si cambia importe/IVA."""
     v = venta_service.actualizar_venta(db, venta_id, data)
@@ -94,7 +95,7 @@ def actualizar_venta(venta_id: int, data: VentaUpdate, db: Session = Depends(get
     )
 
 
-@router.delete("/{venta_id}", status_code=204)
+@router.delete("/{venta_id}", status_code=204, dependencies=[Depends(get_current_active_operator)])
 def eliminar_venta(venta_id: int, db: Session = Depends(get_db)):
     """Elimina una venta (solo si no tiene pagos)."""
     venta_service.eliminar_venta(db, venta_id)

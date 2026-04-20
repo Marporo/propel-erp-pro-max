@@ -3,6 +3,7 @@ Router: Clientes
 Endpoints CRUD para la gestión de clientes.
 """
 from fastapi import APIRouter, Depends
+from app.core.security import get_current_active_operator
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.cliente import Cliente
@@ -17,7 +18,7 @@ def listar_clientes(skip: int = 0, limit: int = 100, db: Session = Depends(get_d
     return db.query(Cliente).order_by(Cliente.nombre).offset(skip).limit(limit).all()
 
 
-@router.post("/", response_model=ClienteResponse, status_code=201)
+@router.post("/", response_model=ClienteResponse, status_code=201, dependencies=[Depends(get_current_active_operator)])
 def crear_cliente(data: ClienteCreate, db: Session = Depends(get_db)):
     """Crea un nuevo cliente."""
     cliente = Cliente(nombre=data.nombre)
@@ -37,7 +38,7 @@ def obtener_cliente(cliente_id: int, db: Session = Depends(get_db)):
     return cliente
 
 
-@router.put("/{cliente_id}", response_model=ClienteResponse)
+@router.put("/{cliente_id}", response_model=ClienteResponse, dependencies=[Depends(get_current_active_operator)])
 def actualizar_cliente(cliente_id: int, data: ClienteUpdate, db: Session = Depends(get_db)):
     """Actualiza un cliente existente."""
     from fastapi import HTTPException
@@ -54,7 +55,7 @@ def actualizar_cliente(cliente_id: int, data: ClienteUpdate, db: Session = Depen
     return cliente
 
 
-@router.delete("/{cliente_id}", status_code=204)
+@router.delete("/{cliente_id}", status_code=204, dependencies=[Depends(get_current_active_operator)])
 def eliminar_cliente(cliente_id: int, db: Session = Depends(get_db)):
     """Elimina un cliente (solo si no tiene ventas asociadas)."""
     from fastapi import HTTPException

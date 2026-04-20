@@ -42,7 +42,10 @@ const categoriaBadge = {
   Cordoba: 'bg-indigo-100 text-indigo-700',
 }
 
+import { useAuth } from '../context/AuthContext'
+
 export default function TesoreriaPage() {
+  const { user } = useAuth()
   const [movimientos, setMovimientos] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -135,12 +138,14 @@ export default function TesoreriaPage() {
             <option value="Cordoba">Córdoba</option>
           </select>
         </div>
-        <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 active:scale-[0.98] transition-all"
-          id="btn-nuevo-gasto">
-          <Plus size={16} />
-          Nuevo Gasto Manual
-        </button>
+        {user?.rol !== 'visor' && (
+          <button onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 active:scale-[0.98] transition-all"
+            id="btn-nuevo-gasto">
+            <Plus size={16} />
+            Nuevo Gasto Manual
+          </button>
+        )}
       </div>
 
       {/* Table */}

@@ -17,6 +17,7 @@ class Usuario(Base):
     nombre_completo = Column(String(200), nullable=True)
     rol = Column(SAEnum(RolUsuario), nullable=False, default=RolUsuario.OPERADOR)
     activo = Column(Boolean, nullable=False, default=True)
+    debe_cambiar_clave = Column(Boolean, nullable=False, default=True)
 
     def __repr__(self):
         return f"<Usuario(id={self.id}, username='{self.username}', rol={self.rol})>"
