@@ -8,6 +8,13 @@ function formatCurrency(v) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v || 0)
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return '—'
+  const parts = dateStr.split('-')
+  if (parts.length !== 3) return dateStr
+  return `${parts[2]}/${parts[1]}/${parts[0]}`
+}
+
 function diasColor(dias) {
   if (dias < 0) return 'text-red-600 bg-red-50'
   if (dias <= 15) return 'text-red-600 bg-red-50'
@@ -162,12 +169,12 @@ export default function ChequesPage() {
                 ) : (
                   cartera.map((c) => (
                     <tr key={c.id} className="hover:bg-surface-50 transition-colors">
-                      <td className="px-4 py-3 text-surface-600">{c.fecha_ingreso}</td>
+                      <td className="px-4 py-3 text-surface-600">{formatDate(c.fecha_ingreso)}</td>
                       <td className="px-4 py-3 font-medium text-surface-800">{c.librador}</td>
                       <td className="px-4 py-3 text-surface-600">{c.banco}</td>
                       <td className="px-4 py-3 text-surface-600">{c.numero_cheque}</td>
                       <td className="px-4 py-3 text-right font-semibold text-surface-800">{formatCurrency(c.importe)}</td>
-                      <td className="px-4 py-3 text-surface-600">{c.fecha_vto}</td>
+                      <td className="px-4 py-3 text-surface-600">{formatDate(c.fecha_vto)}</td>
                       <td className="px-4 py-3 text-center">
                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${diasColor(c.dias_para_vencimiento)}`}>
                           <Clock size={12} />
@@ -224,10 +231,10 @@ export default function ChequesPage() {
                   ) : (
                     emitidos.map((c) => (
                       <tr key={c.id} className="hover:bg-surface-50 transition-colors">
-                        <td className="px-4 py-3 text-surface-600">{c.fecha_emision}</td>
+                        <td className="px-4 py-3 text-surface-600">{formatDate(c.fecha_emision)}</td>
                         <td className="px-4 py-3 font-medium text-surface-800">{c.destino}</td>
                         <td className="px-4 py-3 text-surface-600">{c.numero_cheque}</td>
-                        <td className="px-4 py-3 text-surface-600">{c.fecha_vto}</td>
+                        <td className="px-4 py-3 text-surface-600">{formatDate(c.fecha_vto)}</td>
                         <td className="px-4 py-3 text-right font-semibold text-surface-800">{formatCurrency(c.importe)}</td>
                         <td className="px-4 py-3 text-center">
                           {c.pagado ? (
@@ -269,7 +276,7 @@ export default function ChequesPage() {
             <div className="bg-surface-50 rounded-lg p-3 text-sm space-y-1">
               <div className="flex justify-between"><span className="text-surface-500">Librador:</span><span className="font-medium">{selectedCheque.librador}</span></div>
               <div className="flex justify-between"><span className="text-surface-500">Importe:</span><span className="font-semibold">{formatCurrency(selectedCheque.importe)}</span></div>
-              <div className="flex justify-between"><span className="text-surface-500">Vencimiento:</span><span>{selectedCheque.fecha_vto}</span></div>
+              <div className="flex justify-between"><span className="text-surface-500">Vencimiento:</span><span>{formatDate(selectedCheque.fecha_vto)}</span></div>
             </div>
           )}
           <div>

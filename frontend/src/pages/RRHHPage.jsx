@@ -8,6 +8,13 @@ function formatCurrency(v) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v || 0)
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return '—'
+  const parts = dateStr.split('-')
+  if (parts.length !== 3) return dateStr
+  return `${parts[2]}/${parts[1]}/${parts[0]}`
+}
+
 const ORIGENES_FONDO = [
   { value: 'Efectivo', label: 'Efectivo' },
   { value: 'BNA', label: 'BNA' },
@@ -169,7 +176,7 @@ export default function RRHHPage() {
               ) : (
                 movimientos.map((m) => (
                   <tr key={m.id} className="hover:bg-surface-50 transition-colors">
-                    <td className="px-4 py-3 text-surface-600">{m.fecha}</td>
+                    <td className="px-4 py-3 text-surface-600">{formatDate(m.fecha)}</td>
                     <td className="px-4 py-3 font-medium text-surface-800">{m.concepto}</td>
                     <td className="px-4 py-3 text-right text-green-600 font-medium">{m.ingreso > 0 ? formatCurrency(m.ingreso) : '—'}</td>
                     <td className="px-4 py-3 text-right text-red-600 font-medium">{m.egreso > 0 ? formatCurrency(m.egreso) : '—'}</td>

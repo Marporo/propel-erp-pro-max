@@ -8,6 +8,13 @@ function formatCurrency(v) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v || 0)
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return '—'
+  const parts = dateStr.split('-')
+  if (parts.length !== 3) return dateStr
+  return `${parts[2]}/${parts[1]}/${parts[0]}`
+}
+
 const METODOS_PAGO = [
   { value: 'Efectivo', label: 'Efectivo' },
   { value: 'Transferencia BNA', label: 'Transferencia BNA' },
@@ -217,7 +224,7 @@ export default function VentasPage() {
               ) : (
                 filteredVentas.map((v) => (
                   <tr key={v.id} className="hover:bg-surface-50 transition-colors">
-                    <td className="px-4 py-3 text-surface-600">{v.fecha}</td>
+                    <td className="px-4 py-3 text-surface-600">{formatDate(v.fecha)}</td>
                     <td className="px-4 py-3 font-medium text-surface-800">{v.cliente_nombre}</td>
                     <td className="px-4 py-3 text-surface-600">{v.factura_remito || '—'}</td>
                     <td className="px-4 py-3 text-right text-surface-600">{formatCurrency(v.importe_neto)}</td>

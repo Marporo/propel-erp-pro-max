@@ -8,6 +8,13 @@ function formatCurrency(v) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v || 0)
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return '—'
+  const parts = dateStr.split('-')
+  if (parts.length !== 3) return dateStr
+  return `${parts[2]}/${parts[1]}/${parts[0]}`
+}
+
 const CATEGORIAS_MANUALES = [
   { value: 'G_Casa', label: 'Gastos Casa' },
   { value: 'G_Banco', label: 'Gastos Banco' },
@@ -136,7 +143,7 @@ export default function TesoreriaPage() {
               ) : (
                 movimientos.map((m) => (
                   <tr key={m.id} className="hover:bg-surface-50 transition-colors">
-                    <td className="px-4 py-3 text-surface-600">{m.fecha}</td>
+                    <td className="px-4 py-3 text-surface-600">{formatDate(m.fecha)}</td>
                     <td className="px-4 py-3 font-medium text-surface-800">{m.concepto}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${categoriaBadge[m.categoria_movimiento] || 'bg-surface-100 text-surface-600'}`}>
