@@ -55,12 +55,7 @@
   --radius-xl: 0.25rem;   /* 4px */
 }
 
-/* Base global */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Base global delegada a Tailwind preflight */
 
 body {
   font-family: var(--font-sans);
