@@ -118,3 +118,13 @@ body.dark {
   border-right-color: var(--color-surface-700);
 }
 
+/* Ocultar flechas de los inputs numéricos para mayor limpieza visual */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+

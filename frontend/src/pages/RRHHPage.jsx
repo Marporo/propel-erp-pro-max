@@ -215,7 +215,7 @@ export default function RRHHPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-surface-700 mb-1">Monto</label>
-            <input type="number" step="0.01" value={movForm.monto} onChange={(e) => setMovForm({...movForm, monto: e.target.value})}
+            <input type="number" step="0.01" min="0" value={movForm.monto} onChange={(e) => setMovForm({...movForm, monto: e.target.value})}
               className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="0.00" required />
           </div>
