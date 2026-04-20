@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.routers import (
+    auth,
     clientes,
     empleados,
     ventas,
@@ -17,6 +18,8 @@ from app.routers import (
     caja_diaria,
     dashboard,
 )
+from app.core.security import get_current_user, get_password_hash
+from fastapi import Depends
 
 # Importar todos los modelos para que SQLAlchemy los registre
 from app.models import (  # noqa: F401
@@ -31,8 +34,28 @@ from app.models import (  # noqa: F401
     Usuario,
 )
 
-# Crear todas las tablas en la BD (solo en desarrollo)
+# Crear todas las tablas en la BD
 Base.metadata.create_all(bind=engine)
+
+# Crear usuario admin por defecto si no existe
+from app.database import SessionLocal
+def create_initial_admin():
+    db = SessionLocal()
+    try:
+        if not db.query(Usuario).filter(Usuario.username == "admin").first():
+            print("Creando usuario admin inicial...")
+            hashed_pwd = get_password_hash("admin123")
+            admin_user = Usuario(
+                username="admin",
+                hashed_password=hashed_pwd,
+                nombre_completo="Administrador",
+            )
+            db.add(admin_user)
+            db.commit()
+    finally:
+        db.close()
+
+create_initial_admin()
 
 # Instancia de la aplicación
 app = FastAPI(
@@ -55,14 +78,18 @@ app.add_middleware(
 )
 
 # Registro de routers
-app.include_router(dashboard.router)
-app.include_router(clientes.router)
-app.include_router(empleados.router)
-app.include_router(ventas.router)
-app.include_router(pagos_ventas.router)
-app.include_router(rrhh.router)
-app.include_router(cheques.router)
-app.include_router(caja_diaria.router)
+app.include_router(auth.router)
+
+# Rutas protegidas (Requieren Token)
+auth_dep = [Depends(get_current_user)]
+app.include_router(dashboard.router, dependencies=auth_dep)
+app.include_router(clientes.router, dependencies=auth_dep)
+app.include_router(empleados.router, dependencies=auth_dep)
+app.include_router(ventas.router, dependencies=auth_dep)
+app.include_router(pagos_ventas.router, dependencies=auth_dep)
+app.include_router(rrhh.router, dependencies=auth_dep)
+app.include_router(cheques.router, dependencies=auth_dep)
+app.include_router(caja_diaria.router, dependencies=auth_dep)
 
 
 @app.get("/")

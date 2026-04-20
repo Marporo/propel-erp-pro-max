@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 import Modal from '../components/ui/Modal'
+import ColumnFilterPopover from '../components/ui/ColumnFilterPopover'
+import { applyAdvancedFilters, applyAdvancedSort } from '../utils/tableUtils'
 import { Plus, ArrowRight, Clock, AlertTriangle, CheckCircle } from 'lucide-react'
 
 function formatCurrency(v) {
@@ -13,6 +15,13 @@ function formatDate(dateStr) {
   const parts = dateStr.split('-')
   if (parts.length !== 3) return dateStr
   return `${parts[2]}/${parts[1]}/${parts[0]}`
+}
+
+function diffDays(dateStr) {
+  const date = new Date(dateStr)
+  const today = new Date()
+  today.setHours(0,0,0,0)
+  return Math.ceil((date - today) / (1000 * 60 * 60 * 24))
 }
 
 function diasColor(dias) {
@@ -38,6 +47,26 @@ export default function ChequesPage() {
   const [showEstadoModal, setShowEstadoModal] = useState(false)
   const [showEmitidoModal, setShowEmitidoModal] = useState(false)
   const [selectedCheque, setSelectedCheque] = useState(null)
+  
+  // Advanced Filter States for both tabs
+  const [filtersCartera, setFiltersCartera] = useState({})
+  const [sortCartera, setSortCartera] = useState({ key: null, direction: null, dataType: null })
+  
+  const [filtersEmitidos, setFiltersEmitidos] = useState({})
+  const [sortEmitidos, setSortEmitidos] = useState({ key: null, direction: null, dataType: null })
+
+  const handleFilter = (tab, key, config, dataType) => {
+    if (tab === 'cartera') setFiltersCartera(prev => ({ ...prev, [key]: { ...config, dataType } }))
+    else setFiltersEmitidos(prev => ({ ...prev, [key]: { ...config, dataType } }))
+  }
+  const handleClear = (tab, key) => {
+    if (tab === 'cartera') setFiltersCartera(prev => { const n = {...prev}; delete n[key]; return n })
+    else setFiltersEmitidos(prev => { const n = {...prev}; delete n[key]; return n })
+  }
+  const handleSort = (tab, key, direction, dataType) => {
+    if (tab === 'cartera') setSortCartera({ key, direction, dataType })
+    else setSortEmitidos({ key, direction, dataType })
+  }
 
   const [estadoForm, setEstadoForm] = useState({
     nuevo_estado: 'Depositado',
@@ -149,51 +178,66 @@ export default function ChequesPage() {
       {/* Tab: Cartera */}
       {tab === 'cartera' && (
         <div className="bg-white rounded-xl border border-surface-200 shadow-card overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto min-h-[400px]">
             <table className="w-full text-sm">
               <thead className="bg-surface-50 border-b border-surface-200">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-surface-600">Fecha Ing.</th>
-                  <th className="text-left px-4 py-3 font-semibold text-surface-600">Librador</th>
-                  <th className="text-left px-4 py-3 font-semibold text-surface-600">Banco</th>
-                  <th className="text-left px-4 py-3 font-semibold text-surface-600">Nro. Cheque</th>
+                  <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                    <ColumnFilterPopover columnName="Fecha Ingreso" dataType="date" onApply={(c) => handleFilter('cartera', 'fecha_ingreso', c, 'date')} onClear={() => handleClear('cartera', 'fecha_ingreso')} onSort={(d) => handleSort('cartera', 'fecha_ingreso', d, 'date')} />
+                  </th>
+                  <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                    <ColumnFilterPopover columnName="Librador" dataType="string" onApply={(c) => handleFilter('cartera', 'librador', c, 'string')} onClear={() => handleClear('cartera', 'librador')} onSort={(d) => handleSort('cartera', 'librador', d, 'string')} />
+                  </th>
+                  <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                    <ColumnFilterPopover columnName="Banco" dataType="string" onApply={(c) => handleFilter('cartera', 'banco', c, 'string')} onClear={() => handleClear('cartera', 'banco')} onSort={(d) => handleSort('cartera', 'banco', d, 'string')} />
+                  </th>
+                  <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                    <ColumnFilterPopover columnName="Nro. Cheque" dataType="string" onApply={(c) => handleFilter('cartera', 'numero_cheque', c, 'string')} onClear={() => handleClear('cartera', 'numero_cheque')} onSort={(d) => handleSort('cartera', 'numero_cheque', d, 'string')} />
+                  </th>
                   <th className="text-right px-4 py-3 font-semibold text-surface-600">Importe</th>
-                  <th className="text-left px-4 py-3 font-semibold text-surface-600">Vto.</th>
+                  <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                    <ColumnFilterPopover columnName="Vencimiento" dataType="date" onApply={(c) => handleFilter('cartera', 'fecha_vto', c, 'date')} onClear={() => handleClear('cartera', 'fecha_vto')} onSort={(d) => handleSort('cartera', 'fecha_vto', d, 'date')} />
+                  </th>
                   <th className="text-center px-4 py-3 font-semibold text-surface-600">Días</th>
                   <th className="text-center px-4 py-3 font-semibold text-surface-600">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-100">
-                {cartera.length === 0 ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-surface-400">No hay cheques en cartera</td></tr>
-                ) : (
-                  cartera.map((c) => (
-                    <tr key={c.id} className="hover:bg-surface-50 transition-colors">
-                      <td className="px-4 py-3 text-surface-600">{formatDate(c.fecha_ingreso)}</td>
-                      <td className="px-4 py-3 font-medium text-surface-800">{c.librador}</td>
-                      <td className="px-4 py-3 text-surface-600">{c.banco}</td>
-                      <td className="px-4 py-3 text-surface-600">{c.numero_cheque}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-surface-800">{formatCurrency(c.importe)}</td>
-                      <td className="px-4 py-3 text-surface-600">{formatDate(c.fecha_vto)}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${diasColor(c.dias_para_vencimiento)}`}>
-                          <Clock size={12} />
-                          {c.dias_para_vencimiento}d
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => openEstadoModal(c)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg text-xs font-medium hover:bg-primary-100 transition-colors"
-                          id={`btn-estado-${c.id}`}
-                        >
-                          <ArrowRight size={14} />
-                          Cambiar Estado
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                {(() => {
+                  let result = applyAdvancedFilters(cartera, filtersCartera);
+                  result = applyAdvancedSort(result, sortCartera);
+                  if (result.length === 0) return <tr><td colSpan={8} className="px-4 py-12 text-center text-surface-400">Sin resultados</td></tr>;
+                  
+                  return result.map((c) => {
+                    const dias = diffDays(c.fecha_vto);
+                    return (
+                      <tr key={c.id} className="hover:bg-surface-50 transition-colors">
+                        <td className="px-4 py-3 text-surface-600">{formatDate(c.fecha_ingreso)}</td>
+                        <td className="px-4 py-3 font-medium text-surface-800">{c.librador}</td>
+                        <td className="px-4 py-3 text-surface-600">{c.banco}</td>
+                        <td className="px-4 py-3 text-surface-600">{c.numero_cheque}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-surface-800">{formatCurrency(c.importe)}</td>
+                        <td className="px-4 py-3 text-surface-600">{formatDate(c.fecha_vto)}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${diasColor(dias)}`}>
+                            <Clock size={12} />
+                            {dias}d
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            onClick={() => openEstadoModal(c)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg text-xs font-medium hover:bg-primary-100 transition-colors border border-primary-200 shadow-sm"
+                            id={`btn-estado-${c.id}`}
+                          >
+                            <ArrowRight size={14} />
+                            Cambiar Estado
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })
+                })()}
               </tbody>
             </table>
           </div>
@@ -212,24 +256,34 @@ export default function ChequesPage() {
             </button>
           </div>
           <div className="bg-white rounded-xl border border-surface-200 shadow-card overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto min-h-[400px]">
               <table className="w-full text-sm">
                 <thead className="bg-surface-50 border-b border-surface-200">
                   <tr>
-                    <th className="text-left px-4 py-3 font-semibold text-surface-600">Fecha Em.</th>
-                    <th className="text-left px-4 py-3 font-semibold text-surface-600">Destino</th>
-                    <th className="text-left px-4 py-3 font-semibold text-surface-600">Nro. Cheque</th>
-                    <th className="text-left px-4 py-3 font-semibold text-surface-600">Vto.</th>
+                    <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                      <ColumnFilterPopover columnName="Fecha Emisión" dataType="date" onApply={(c) => handleFilter('emitidos', 'fecha_emision', c, 'date')} onClear={() => handleClear('emitidos', 'fecha_emision')} onSort={(d) => handleSort('emitidos', 'fecha_emision', d, 'date')} />
+                    </th>
+                    <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                      <ColumnFilterPopover columnName="Destino" dataType="string" onApply={(c) => handleFilter('emitidos', 'destino', c, 'string')} onClear={() => handleClear('emitidos', 'destino')} onSort={(d) => handleSort('emitidos', 'destino', d, 'string')} />
+                    </th>
+                    <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                      <ColumnFilterPopover columnName="Nro. Cheque" dataType="string" onApply={(c) => handleFilter('emitidos', 'numero_cheque', c, 'string')} onClear={() => handleClear('emitidos', 'numero_cheque')} onSort={(d) => handleSort('emitidos', 'numero_cheque', d, 'string')} />
+                    </th>
+                    <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                      <ColumnFilterPopover columnName="Vencimiento" dataType="date" onApply={(c) => handleFilter('emitidos', 'fecha_vto', c, 'date')} onClear={() => handleClear('emitidos', 'fecha_vto')} onSort={(d) => handleSort('emitidos', 'fecha_vto', d, 'date')} />
+                    </th>
                     <th className="text-right px-4 py-3 font-semibold text-surface-600">Importe</th>
                     <th className="text-center px-4 py-3 font-semibold text-surface-600">Estado</th>
                     <th className="text-center px-4 py-3 font-semibold text-surface-600">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-100">
-                  {emitidos.length === 0 ? (
-                    <tr><td colSpan={7} className="px-4 py-12 text-center text-surface-400">No hay cheques emitidos</td></tr>
-                  ) : (
-                    emitidos.map((c) => (
+                  {(() => {
+                    let result = applyAdvancedFilters(emitidos, filtersEmitidos);
+                    result = applyAdvancedSort(result, sortEmitidos);
+                    if (result.length === 0) return <tr><td colSpan={7} className="px-4 py-12 text-center text-surface-400">Sin resultados</td></tr>;
+                    
+                    return result.map((c) => (
                       <tr key={c.id} className="hover:bg-surface-50 transition-colors">
                         <td className="px-4 py-3 text-surface-600">{formatDate(c.fecha_emision)}</td>
                         <td className="px-4 py-3 font-medium text-surface-800">{c.destino}</td>
@@ -250,10 +304,10 @@ export default function ChequesPage() {
                         <td className="px-4 py-3 text-center">
                           <button
                             onClick={() => handleMarcarPagado(c.id, !c.pagado)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-sm ${
                               c.pagado
-                                ? 'bg-surface-100 text-surface-500 hover:bg-surface-200'
-                                : 'bg-green-50 text-green-700 hover:bg-green-100'
+                                ? 'bg-surface-100 text-surface-500 hover:bg-surface-200 border-surface-200'
+                                : 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200'
                             }`}
                           >
                             {c.pagado ? 'Desmarcar' : 'Marcar Pagado'}
@@ -261,7 +315,7 @@ export default function ChequesPage() {
                         </td>
                       </tr>
                     ))
-                  )}
+                  })()}
                 </tbody>
               </table>
             </div>

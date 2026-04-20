@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 import Modal from '../components/ui/Modal'
+import ColumnFilterPopover from '../components/ui/ColumnFilterPopover'
+import { applyAdvancedFilters, applyAdvancedSort } from '../utils/tableUtils'
 import { Plus, CreditCard, Search } from 'lucide-react'
 
 function formatCurrency(v) {
@@ -38,6 +40,24 @@ export default function VentasPage() {
   const [showClienteModal, setShowClienteModal] = useState(false)
   const [selectedVenta, setSelectedVenta] = useState(null)
   const [search, setSearch] = useState('')
+  
+  // Advanced Filter States
+  const [filters, setFilters] = useState({})
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null, dataType: null })
+
+  const handleFilter = (key, config, dataType) => {
+    setFilters(prev => ({ ...prev, [key]: { ...config, dataType } }))
+  }
+  const handleClear = (key) => {
+    setFilters(prev => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+  }
+  const handleSort = (key, direction, dataType) => {
+    setSortConfig({ key, direction, dataType })
+  }
 
   // Form states
   const [ventaForm, setVentaForm] = useState({
@@ -154,15 +174,16 @@ export default function VentasPage() {
     setShowPagoModal(true)
   }
 
-  const filteredVentas = ventas.filter((v) => {
+  let processedVentas = ventas.filter((v) => {
     const term = search.toLowerCase()
-    return (
-      !term ||
+    return !term ||
       v.cliente_nombre?.toLowerCase().includes(term) ||
       v.factura_remito?.toLowerCase().includes(term) ||
       v.estado_pago?.toLowerCase().includes(term)
-    )
   })
+  
+  processedVentas = applyAdvancedFilters(processedVentas, filters)
+  processedVentas = applyAdvancedSort(processedVentas, sortConfig)
 
   if (loading) {
     return (
@@ -199,30 +220,38 @@ export default function VentasPage() {
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-surface-200 shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-sm">
             <thead className="bg-surface-50 border-b border-surface-200">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold text-surface-600">Fecha</th>
-                <th className="text-left px-4 py-3 font-semibold text-surface-600">Cliente</th>
-                <th className="text-left px-4 py-3 font-semibold text-surface-600">Factura/Remito</th>
+                <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                  <ColumnFilterPopover columnName="Fecha" dataType="date" onApply={(c) => handleFilter('fecha', c, 'date')} onClear={() => handleClear('fecha')} onSort={(d) => handleSort('fecha', d, 'date')} />
+                </th>
+                <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                  <ColumnFilterPopover columnName="Cliente" dataType="string" onApply={(c) => handleFilter('cliente_nombre', c, 'string')} onClear={() => handleClear('cliente_nombre')} onSort={(d) => handleSort('cliente_nombre', d, 'string')} />
+                </th>
+                <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                  <ColumnFilterPopover columnName="Factura/Remito" dataType="string" onApply={(c) => handleFilter('factura_remito', c, 'string')} onClear={() => handleClear('factura_remito')} onSort={(d) => handleSort('factura_remito', d, 'string')} />
+                </th>
                 <th className="text-right px-4 py-3 font-semibold text-surface-600">Neto</th>
                 <th className="text-center px-4 py-3 font-semibold text-surface-600">IVA</th>
                 <th className="text-right px-4 py-3 font-semibold text-surface-600">Total</th>
                 <th className="text-right px-4 py-3 font-semibold text-surface-600">Saldo Deudor</th>
-                <th className="text-center px-4 py-3 font-semibold text-surface-600">Estado</th>
+                <th className="text-center px-2 py-3 font-semibold text-surface-600">
+                  <ColumnFilterPopover columnName="Estado" dataType="string" onApply={(c) => handleFilter('estado_pago', c, 'string')} onClear={() => handleClear('estado_pago')} onSort={(d) => handleSort('estado_pago', d, 'string')} />
+                </th>
                 <th className="text-center px-4 py-3 font-semibold text-surface-600">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-100">
-              {filteredVentas.length === 0 ? (
+              {processedVentas.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center text-surface-400">
-                    {search ? 'No se encontraron ventas con ese criterio' : 'No hay ventas registradas. ¡Cargá la primera!'}
+                    {search || Object.keys(filters).length > 0 ? 'No se encontraron ventas con ese criterio' : 'No hay ventas registradas. ¡Cargá la primera!'}
                   </td>
                 </tr>
               ) : (
-                filteredVentas.map((v) => (
+                processedVentas.map((v) => (
                   <tr key={v.id} className="hover:bg-surface-50 transition-colors">
                     <td className="px-4 py-3 text-surface-600">{formatDate(v.fecha)}</td>
                     <td className="px-4 py-3 font-medium text-surface-800">{v.cliente_nombre}</td>
@@ -242,7 +271,7 @@ export default function VentasPage() {
                       {v.saldo_deudor > 0 && (
                         <button
                           onClick={() => openPagoModal(v)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-medium hover:bg-green-100 transition-colors"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-medium hover:bg-green-100 transition-colors border border-green-200 shadow-sm"
                           id={`btn-pago-${v.id}`}
                         >
                           <CreditCard size={14} />

@@ -13,12 +13,24 @@ const api = axios.create({
 });
 
 // Interceptor de respuesta para manejar errores globalmente
+// Inyectar Token en cada request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message = error.response?.data?.detail || 'Error de conexión con el servidor';
-    toast.error(message);
-    return Promise.reject(error);
+    // Si da 401, podríamos disparar un evento de logout, pero el AuthContext lo maneja
+    const message = error.response?.data?.detail || 'Error de conexión con el servidor'
+    if (error.response?.status !== 401) {
+      toast.error(message)
+    }
+    return Promise.reject(error)
   }
 );
 

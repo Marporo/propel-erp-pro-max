@@ -8,7 +8,9 @@ import {
   Pin,
   PinOff,
   X,
+  LogOut,
 } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -31,6 +33,8 @@ const navItems = [
  *  - isMobileOverlay: boolean
  */
 export default function Sidebar({ pinned, onTogglePin, onClose, isMobileOverlay }) {
+  const { user, logout } = useAuth()
+
   return (
     <aside
       className="fixed top-0 left-0 h-full bg-white border-r border-surface-200 z-50 flex flex-col w-[260px] shadow-sm"
@@ -96,14 +100,29 @@ export default function Sidebar({ pinned, onTogglePin, onClose, isMobileOverlay 
         ))}
       </nav>
 
-      {/* Footer hint */}
-      {!isMobileOverlay && (
-        <div className="px-4 py-3 border-t border-surface-200">
+      {/* Footer hint and User */}
+      <div className="px-4 py-4 border-t border-surface-200">
+        {user && (
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-sm font-medium text-surface-800 truncate">{user.nombre_completo || user.username}</span>
+              <span className="text-[11px] text-surface-500 uppercase tracking-wider font-semibold">{user.rol}</span>
+            </div>
+            <button
+              onClick={logout}
+              className="p-2 text-surface-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors flex-shrink-0"
+              title="Cerrar Sesión"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
+        )}
+        {!isMobileOverlay && (
           <p className="text-[11px] text-surface-400 text-center">
             {pinned ? 'Menú fijado' : 'Menú no fijado'}
           </p>
-        </div>
-      )}
+        )}
+      </div>
     </aside>
   )
 }

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 import Modal from '../components/ui/Modal'
+import ColumnFilterPopover from '../components/ui/ColumnFilterPopover'
+import { applyAdvancedFilters, applyAdvancedSort } from '../utils/tableUtils'
 import { Plus, Filter, ArrowDownCircle, ArrowUpCircle } from 'lucide-react'
 
 function formatCurrency(v) {
@@ -45,6 +47,24 @@ export default function TesoreriaPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [filterCat, setFilterCat] = useState('')
+  
+  // Advanced Filter States
+  const [filters, setFilters] = useState({})
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null, dataType: null })
+
+  const handleFilter = (key, config, dataType) => {
+    setFilters(prev => ({ ...prev, [key]: { ...config, dataType } }))
+  }
+  const handleClear = (key) => {
+    setFilters(prev => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+  }
+  const handleSort = (key, direction, dataType) => {
+    setSortConfig({ key, direction, dataType })
+  }
 
   const [form, setForm] = useState({
     fecha: new Date().toISOString().split('T')[0],
@@ -125,23 +145,49 @@ export default function TesoreriaPage() {
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-surface-200 shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-sm">
             <thead className="bg-surface-50 border-b border-surface-200">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold text-surface-600">Fecha</th>
-                <th className="text-left px-4 py-3 font-semibold text-surface-600">Concepto</th>
-                <th className="text-center px-4 py-3 font-semibold text-surface-600">Categoría</th>
+                <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                  <ColumnFilterPopover columnName="Fecha" dataType="date" onApply={(c) => handleFilter('fecha', c, 'date')} onClear={() => handleClear('fecha')} onSort={(d) => handleSort('fecha', d, 'date')} />
+                </th>
+                <th className="text-left px-2 py-3 font-semibold text-surface-600">
+                  <ColumnFilterPopover columnName="Concepto" dataType="string" onApply={(c) => handleFilter('concepto', c, 'string')} onClear={() => handleClear('concepto')} onSort={(d) => handleSort('concepto', d, 'string')} />
+                </th>
+                <th className="text-center px-2 py-3 font-semibold text-surface-600">
+                  <ColumnFilterPopover columnName="Categoría" dataType="string" onApply={(c) => handleFilter('categoria_movimiento', c, 'string')} onClear={() => handleClear('categoria_movimiento')} onSort={(d) => handleSort('categoria_movimiento', d, 'string')} />
+                </th>
                 <th className="text-right px-4 py-3 font-semibold text-surface-600">Ingreso</th>
                 <th className="text-right px-4 py-3 font-semibold text-surface-600">Egreso</th>
-                <th className="text-center px-4 py-3 font-semibold text-surface-600">Origen</th>
+                <th className="text-center px-2 py-3 font-semibold text-surface-600">
+                  <ColumnFilterPopover columnName="Origen" dataType="string" onApply={(c) => handleFilter('es_automatico', c, 'string')} onClear={() => handleClear('es_automatico')} onSort={(d) => handleSort('es_automatico', d, 'string')} />
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-100">
-              {movimientos.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-surface-400">Sin movimientos</td></tr>
-              ) : (
-                movimientos.map((m) => (
+              {(() => {
+                // Map custom fields to original data to make filtering by "Origen" string possible
+                const mappedMovimientos = movimientos.map(m => ({
+                  ...m,
+                  es_automatico_str: m.es_automatico ? 'auto' : m.es_ajuste ? 'ajuste' : 'manual'
+                }))
+                
+                // Hack: We bound "es_automatico" filter column. Since applyFilters reads the key directly, 
+                // we should filter 'es_automatico_str' using the 'es_automatico' key configs.
+                const adaptedFilters = { ...filters };
+                if (adaptedFilters.es_automatico) {
+                  adaptedFilters.es_automatico_str = adaptedFilters.es_automatico;
+                  delete adaptedFilters.es_automatico;
+                }
+                if (sortConfig.key === 'es_automatico') sortConfig.key = 'es_automatico_str';
+
+                let result = applyAdvancedFilters(mappedMovimientos, adaptedFilters);
+                result = applyAdvancedSort(result, sortConfig);
+                
+                if (result.length === 0) return <tr><td colSpan={6} className="px-4 py-12 text-center text-surface-400">Sin resultados</td></tr>;
+                
+                return result.map((m) => (
                   <tr key={m.id} className="hover:bg-surface-50 transition-colors">
                     <td className="px-4 py-3 text-surface-600">{formatDate(m.fecha)}</td>
                     <td className="px-4 py-3 font-medium text-surface-800">{m.concepto}</td>
@@ -153,7 +199,7 @@ export default function TesoreriaPage() {
                     <td className="px-4 py-3 text-right">
                       {m.ingreso > 0 && (
                         <span className="flex items-center justify-end gap-1 text-green-600 font-medium">
-                          <ArrowDownCircle size={14} />
+                          <ArrowUpCircle size={14} />
                           {formatCurrency(m.ingreso)}
                         </span>
                       )}
@@ -161,7 +207,7 @@ export default function TesoreriaPage() {
                     <td className="px-4 py-3 text-right">
                       {m.egreso > 0 && (
                         <span className="flex items-center justify-end gap-1 text-red-600 font-medium">
-                          <ArrowUpCircle size={14} />
+                          <ArrowDownCircle size={14} />
                           {formatCurrency(m.egreso)}
                         </span>
                       )}
@@ -173,7 +219,7 @@ export default function TesoreriaPage() {
                     </td>
                   </tr>
                 ))
-              )}
+              })()}
             </tbody>
           </table>
         </div>
