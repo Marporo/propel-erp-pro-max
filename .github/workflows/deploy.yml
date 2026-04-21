@@ -1,0 +1,35 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/propel-erp-pro-max
+            
+            # 1. Bajar el código nuevo
+            git pull origin main
+            
+            # 2. Actualizar Backend
+            source backend/venv/bin/activate
+            pip install -r backend/requirements.txt
+            systemctl restart propel-backend
+            
+            # 3. Actualizar Frontend (Build)
+            cd frontend
+            npm install
+            npm run build
+            
+            # 4. Reiniciar servidor web
+            systemctl restart nginx
