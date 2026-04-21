@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: propel_backend
+    restart: always
+    volumes:
+      # Persistencia de la base de datos
+      - ./backend/propel_erp.db:/app/propel_erp.db
+    environment:
+      - DATABASE_URL=sqlite:///./propel_erp.db
+    ports:
+      - "8000:8000"
+    networks:
+      - propel_network
+
+  frontend:
+    build: ./frontend
+    container_name: propel_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - propel_network
+
+networks:
+  propel_network:
+    driver: bridge
