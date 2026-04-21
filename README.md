@@ -122,3 +122,5 @@ sistema_admin_taller/
 
 ---
 *Desarrollado para máxima escalabilidad y simplicidad administrativa.*
+
+*Despliegue automático configurado con éxito.*
